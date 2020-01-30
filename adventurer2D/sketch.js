@@ -1,6 +1,6 @@
 /*
 
-The Game Project - Part 6 
+The Game Project - Part 7 
 
 */
 
@@ -14,6 +14,7 @@ var isLeft;
 var isRight;
 var isFalling;
 var isPlummeting;
+//var on_platform; 
 
 var trees_x;
 var clouds;
@@ -25,6 +26,9 @@ var game_score;
 var flagpole;
 var lives;
 
+var platforms;
+var bullet_enemy;
+
 function setup()
 {
 	createCanvas(1024, 576);
@@ -35,6 +39,7 @@ function setup()
 
 function draw()
 {
+    console.log(frameRate());
 	background(100, 155, 255); // fill the sky blue
 
 	noStroke();
@@ -70,8 +75,16 @@ function draw()
         }
     }    
 
-    //Draw
+    //Draw platforms
+    for (var i = 0; i < platforms.length; i++)
+        drawPlatform(platforms[i]);  
+    
+    //Call to render flagPole.
     renderFlagpole();
+    
+    //Call to render Bullet Enemies.
+    drawBulletEnemies(bullet_enemy[0]);
+
     pop(); 
     
     // Draw game character.
@@ -80,8 +93,10 @@ function draw()
     // Draw game score.
     fill(255);
     noStroke();
+    textSize(18);
     text("score: " + game_score, 20, 20);
     checkPlayerDie();
+    
     drawLives();
 
     // Game Over Behavior.
@@ -90,7 +105,7 @@ function draw()
         fill(0,0,255);
         textSize(18);
         text("Game over. Press space to continue.", width/3, height/2);
-        return ;
+        noLoop();
     }
     
     // Level Complete Behavior.
@@ -99,7 +114,7 @@ function draw()
         fill(245, 255, 0);
         textSize(18);
         text("Level complete. Press space to continue.", width/3, height/2);
-        return ;
+        noLoop();
     }
     
 	// Logic to make the game character move or the background scroll.
@@ -126,12 +141,20 @@ function draw()
 			scrollPos -= 5; // negative for moving against the background
 		}
 	}
-
+    
 	// Logic to make the game character rise and fall.
     if (gameChar_y < floorPos_y)
     {
-        gameChar_y += 2;
-        isFalling = true;
+        // Stop from falling if character is on top of a platform.
+        on_platform = checkPlatform();
+        
+        if (on_platform == false)
+        {
+            gameChar_y += 2;
+            isFalling = true;
+        }
+    
+        on_platform = false;
     }
     else
     {
@@ -156,9 +179,15 @@ function keyPressed()
         isLeft = true;
     if (keyCode == 39)
         isRight = true;
-    if ((keyCode == 32) && (gameChar_y == floorPos_y))
+    if (((keyCode == 32) && (gameChar_y == floorPos_y)) || //Only allows character to jump if on floor
+        ((keyCode == 32) && checkPlatform()))              //Only allows character to jump if on platform
     {
         gameChar_y -= 100;
+    }
+    if (keyCode == 32 && lives < 1)
+    {
+        lives = 3;
+        startGame();
     }
 }
 
@@ -439,6 +468,7 @@ function checkPlayerDie()
     }    
 }
 
+//Function to draw lives.
 function drawLives()
 {
     offset = 0;
@@ -447,10 +477,70 @@ function drawLives()
     fill(255, 0, 0);
     for(i = 0; i < lives; i++)
     {
-        ellipse(width-150+offset, 20, 15, 15);
-        offset += 25;        
+        heart(width-150+offset, 20, 18);
+        offset += 30;        
     }
     pop();
+}
+
+//Function to draw Hearts.
+function heart(x, y, size) 
+{
+    x_pos = x;
+    y_pos = y;
+    beginShape();
+    vertex(x_pos, y_pos);
+    bezierVertex(x_pos - size / 2, y_pos - size / 2, x_pos - size, y_pos + size / 3, x_pos, y_pos + size);
+    bezierVertex(x_pos + size, y_pos + size / 3, x_pos + size / 2, y_pos - size / 2, x_pos, y_pos);
+    endShape(CLOSE);
+}
+
+// ----------------------------------
+// Platforms draw and check functions
+// ----------------------------------
+function drawPlatform(t_platform)
+{
+    fill(0);
+    rect(t_platform.x_pos, t_platform.y_pos, t_platform.width, 10);    
+}
+
+function checkPlatform()
+{
+    for (var i = 0; i < platforms.length; i++)
+    {
+        if (((gameChar_world_x > platforms[0].x_pos) && (gameChar_world_x <= (platforms[0].x_pos+platforms[0].width))) && (gameChar_y == (platforms[0].y_pos+1)))
+        {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+// ----------------------------------
+// Enemies Drawing & Checking Functions
+// ----------------------------------
+
+//Bullet Enemy
+function drawBulletEnemies(t_bullet)
+{
+    fill(0);
+    ellipse(t_bullet.x_pos, t_bullet.y_pos, 25, 25);
+    t_bullet.x_pos -= t_bullet.speed;
+    if (t_bullet.x_pos <= -1300)
+        t_bullet.x_pos = 3500;
+    
+    checkBulletEnemies(t_bullet); //Check bullet object collision.
+}
+
+function checkBulletEnemies(t_bullet)
+{
+    d = dist(gameChar_world_x, gameChar_y, t_bullet.x_pos, t_bullet.y_pos);
+ 
+    if (d <= 35)
+    {
+        lives--;
+        startGame();
+    }
 }
 
 function startGame()
@@ -460,6 +550,7 @@ function startGame()
     treePos_y = height/2;
     isFalling = false;
     isPlummeting = false;
+    on_platform = false;
 
 	// Variable to control the background scrolling.
 	scrollPos = 0;
@@ -509,4 +600,14 @@ function startGame()
     game_score = 0;
     
     flagpole = {isReached: false, x_pos: 2950};
+    
+    platforms = [
+        {x_pos:500, y_pos: floorPos_y-25, width: 100}
+    ];
+    
+    bullet_enemy = [
+        {x_pos: 900, y_pos: floorPos_y-25, speed: 2}
+    ];
+    
+    loop();
 }
