@@ -39,7 +39,7 @@ function setup()
 
 function draw()
 {
-    console.log(frameRate());
+//    console.log(frameRate());
 	background(100, 155, 255); // fill the sky blue
 
 	noStroke();
@@ -83,13 +83,14 @@ function draw()
     renderFlagpole();
     
     //Call to render Bullet Enemies.
-    drawBulletEnemies(bullet_enemy[0]);
+    for (var i = 0; i < bullet_enemy.length; i++)
+        drawBulletEnemies(bullet_enemy[i]);
 
     pop(); 
     
     // Draw game character.
 	drawGameChar();
-   
+
     // Draw game score.
     fill(255);
     noStroke();
@@ -500,8 +501,10 @@ function heart(x, y, size)
 // ----------------------------------
 function drawPlatform(t_platform)
 {
-    fill(0);
-    rect(t_platform.x_pos, t_platform.y_pos, t_platform.width, 10);    
+    push();
+    fill(0,0,0);
+    rect(t_platform.x_pos, t_platform.y_pos, t_platform.width, 10); 
+    pop();
 }
 
 function checkPlatform()
@@ -523,21 +526,107 @@ function checkPlatform()
 //Bullet Enemy
 function drawBulletEnemies(t_bullet)
 {
-    fill(0);
-    ellipse(t_bullet.x_pos, t_bullet.y_pos, 25, 25);
-    t_bullet.x_pos -= t_bullet.speed;
-    if (t_bullet.x_pos <= -1300)
+    t_bullet.x_pos -= t_bullet.speed; // Decreases x_pos to make Bullet fly across the word.
+    
+    if (t_bullet.x_pos <= -1300) //Resets Bullet Positioning if has reached the defined boundries.
         t_bullet.x_pos = 3500;
+    
+    
+    x = t_bullet.x_pos;
+    y = t_bullet.y_pos;
+    size = t_bullet.size;
+    push();
+    
+    if (t_bullet.deadly)
+        fill(170, 13, 0);
+    else
+        fill(0); 
+    first_part = {
+        x: x,
+        y: y,
+        width: 25 * size,
+        height: 25 * size
+      };
+
+    rect(first_part.x, first_part.y, first_part.width, first_part.height, 360, 0, 0, 360);
+
+    fill(10); 
+    second_part = {
+        x: x + (25 * size),
+        y: y + (2.5 * size),
+        width: 4 * size,
+        height: 20 * size
+      };
+
+    rect(second_part.x, second_part.y, second_part.width, second_part.height);
+    fill(0);
+    third_part = {
+                    x: (x + (25 * size) + 4 * size),
+                    y: y,
+                    width: 2 * size,
+                    height: 25 * size
+                };
+    rect(third_part.x, third_part.y, third_part.width, third_part.height);
+
+
+    eyes_blank = {
+        x_pos: x + (8.5 * size),
+        y_pos: y + (6.5 * size),
+        width: 8 * size,
+        height: 9 * size
+      };
+
+      fill(255);
+      arc(eyes_blank.x_pos, eyes_blank.y_pos, eyes_blank.width,
+        eyes_blank.height, -HALF_PI + QUARTER_PI, PI + -QUARTER_PI, CHORD);
+
+      eyes_pupil = {
+        x_pos: x + (8.5 * size),
+        y_pos: y + (6.5 * size),
+        width: 3 * size,
+        height: 4.5 * size
+      };
+
+      
+      fill(0);
+      arc(eyes_pupil.x_pos, eyes_pupil.y_pos, eyes_pupil.width,
+        eyes_pupil.height, -HALF_PI + QUARTER_PI, PI + -QUARTER_PI, CHORD);
+
+      fill(255, 0, 0);
+      mouth = {
+        x_pos: x * 3,
+        y_pos: y * 2.6
+      };
+
+      beginShape();
+      vertex(x + (2.5 * size), y + (20 * size));
+      bezierVertex( x + (10 * size), y + (10 * size),
+                    x + (13 * size), y + (22 * size),
+                    x + (6 * size), y + (23 * size));
+      endShape();
+      pop();
+
+    
+    t_bullet.center_x = x + ( (first_part.width + second_part.width + third_part.width) / 2); 
+    t_bullet.center_y = y + ( first_part.height / 2); 
     
     checkBulletEnemies(t_bullet); //Check bullet object collision.
 }
 
 function checkBulletEnemies(t_bullet)
 {
-    d = dist(gameChar_world_x, gameChar_y, t_bullet.x_pos, t_bullet.y_pos);
- 
-    if (d <= 35)
+    d = dist(gameChar_world_x, gameChar_y-25, t_bullet.center_x, t_bullet.center_y);
+    
+    if (t_bullet.size == 1)
+        proximity = 35;
+    else if (t_bullet.size == 2)
+        proximity = 55;
+    else if (t_bullet.size == 3)
+        proximity = 65;
+    
+    if (d <= proximity)
     {
+
         lives--;
         startGame();
     }
@@ -606,7 +695,10 @@ function startGame()
     ];
     
     bullet_enemy = [
-        {x_pos: 900, y_pos: floorPos_y-25, speed: 2}
+        {x_pos: 2000, y_pos: floorPos_y-20, size: 1, speed: 3, center_x: null, center_y: null},
+        {x_pos: 2500, y_pos: floorPos_y-25, size: 2, speed: 2, center_x: null, center_y: null},
+        {x_pos: 2500, y_pos: floorPos_y-25, size: 3,  speed: 1, center_x: null, center_y: null},
+        {x_pos: 2500, y_pos: floorPos_y-20, size: 1, speed: 7, center_x: null, center_y: null, deadly: true}
     ];
     
     loop();
