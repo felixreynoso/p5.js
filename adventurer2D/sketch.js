@@ -54,8 +54,6 @@ function setup()
 
 function draw()
 {
-//    console.log(frameRate());
-    console.log(gameChar_world_x);
 	background(100, 155, 255); // fill the sky blue
 
 	noStroke();
@@ -116,6 +114,7 @@ function draw()
     
     drawLives();
 
+
     // Game Over Behavior.
     if (lives < 1)
     {
@@ -126,12 +125,14 @@ function draw()
         stopGameMusic();
         gameSounds.game_over.play();
     }
-    
+
     // Level Complete Behavior.
     if (flagpole.isReached)
     {
         if (gameSounds.level.isPlaying())
+        {    
             gameSounds.level.pause();
+        }
         fill(245, 255, 0);
         textSize(18);
         text("Level complete. Press space to continue.", width/3, height/2);
@@ -178,7 +179,6 @@ function draw()
         }
     
         on_platform = false;
-        console.log(on_platform, gameChar_y, platforms[0].y_pos, floorPos_y);
     }
     else
     {
@@ -203,14 +203,19 @@ function keyPressed()
     {   
         gameSounds.level.rate(1.25);
         gameSounds.level.play();
-        
     }
 	if (keyCode == 37)
+    {
         isLeft = true;
+    }
     if (keyCode == 39)
+    {    
         isRight = true;
-    if (((keyCode == 32) && (gameChar_y == floorPos_y)) || //Only allows character to jump if on floor
-        ((keyCode == 32) && checkPlatform()))              //Only allows character to jump if on platform
+    }
+    if (
+        ((keyCode == 32) && (gameChar_y == floorPos_y)) ||  //Only jump if on floor
+        ((keyCode == 32) && checkPlatform())                //Only  jump if on platform
+    )              
     {
         gameSounds.jumped.play();
         gameChar_y -= 100;
@@ -225,9 +230,13 @@ function keyPressed()
 function keyReleased()
 {
 	if (keyCode == 37)
+    {    
         isLeft = false;
+    }
     if (keyCode == 39)
+    {    
         isRight = false;
+    }
 }
 
 
@@ -240,7 +249,7 @@ function keyReleased()
 function drawGameChar()
 {
 	// draw game character
-	if(isLeft && isFalling)
+	if (isLeft && isFalling)
 	{
 		// add your jumping-left code
         fill(232, 198, 135);
@@ -260,7 +269,7 @@ function drawGameChar()
         rect(gameChar_x - head_pos - 1, gameChar_y -10 , 12, 10); // left leg
         rect(gameChar_x - head_pos + 21 , gameChar_y -10 , 12, 10); // right leg
 	}
-	else if(isRight && isFalling)
+	else if (isRight && isFalling)
 	{
 		// add your jumping-right code
         fill(232, 198, 135);
@@ -280,7 +289,7 @@ function drawGameChar()
         rect(gameChar_x - head_pos + 2 , gameChar_y -10 , 12, 10); // left leg
         rect(gameChar_x - head_pos + 21 + 3, gameChar_y -10 , 12, 10); // right leg
 	}
-	else if(isLeft)
+	else if (isLeft)
 	{
 		// add your walking left code
         fill(232, 198, 135);
@@ -300,7 +309,7 @@ function drawGameChar()
         rect(gameChar_x - head_pos -1 , gameChar_y -7 , 12, 10); // left leg
         rect(gameChar_x - head_pos + 21, gameChar_y -7 , 12, 10); // right leg     
 	}
-	else if(isRight)
+	else if (isRight)
 	{
 		// add your walking right code
         fill(232, 198, 135);
@@ -320,7 +329,7 @@ function drawGameChar()
         rect(gameChar_x - head_pos +2 , gameChar_y -7 , 12, 10); // left leg
         rect(gameChar_x - head_pos + 24, gameChar_y -7 , 12, 10); // right leg            
 	}
-	else if(isFalling)
+	else if (isFalling)
 	{
 		// add your jumping facing forwards code
         fill(232, 198, 135);
@@ -364,7 +373,7 @@ function drawGameChar()
 // Function to draw cloud objects.
 function drawClouds()
 {
-    for(var i = 0; i < clouds.length; i++)
+    for (var i = 0; i < clouds.length; i++)
     {
         fill(255);
         noStroke();
@@ -377,7 +386,7 @@ function drawClouds()
 // Function to draw mountains objects.
 function drawMountains()
 {
-    for(var i = 0; i < mountains.length; i++)
+    for (var i = 0; i < mountains.length; i++)
     {
         fill(125, 138, 166);
         triangle(mountains[i].x_pos, 432,
@@ -389,7 +398,7 @@ function drawMountains()
 // Function to draw trees objects.
 function drawTrees()
 {
-    for(var i = 0; i < trees_x.length; i++)
+    for (var i = 0; i < trees_x.length; i++)
     {
         fill(114, 76, 10);
         rect(trees_x[i], treePos_y + 45 , 60, 100);
@@ -416,7 +425,10 @@ function drawCanyon(t_canyon)
 
 function checkCanyon(t_canyon)
 {    
-    if (in_range(gameChar_world_x, t_canyon.x_pos, (t_canyon.x_pos+t_canyon.width)) && (gameChar_y >= floorPos_y))
+    if (
+        (in_range(gameChar_world_x, t_canyon.x_pos, (t_canyon.x_pos+t_canyon.width))) &&
+        (gameChar_y >= floorPos_y)
+    )
     {
         isPlummeting = true;
     }
@@ -425,9 +437,13 @@ function checkCanyon(t_canyon)
 function in_range(val, i, j)
 {
     if ((val >= i) && (val <= j))
+    {    
         return true;
+    }
     else
+    {    
         return false;
+    }
 }
 // ----------------------------------
 // Collectable items render and check functions
@@ -483,6 +499,7 @@ function renderFlagpole()
 function checkFlagpole()
 {
     d = dist(flagpole.x_pos, floorPos_y+50, gameChar_world_x, floorPos_y+50);
+    
     if (d <= 15)
     {
         flagpole.isReached = true;
@@ -496,10 +513,10 @@ function checkPlayerDie()
     {
         stopGameMusic();
         gameSounds.died.play();
+        
         if (lives > 0)
         {   
             lives--;
-            waitSongFinish(gameSounds.died);
             startGame();
         }
     }    
@@ -574,7 +591,10 @@ function checkPlatform()
 {
     for (var i = 0; i < platforms.length; i++)
     {
-        if (((gameChar_world_x > platforms[i].x_pos) && (gameChar_world_x <= (platforms[i].x_pos+(platforms[i].size * 25)))) && (gameChar_y == (platforms[i].y_pos+1)))
+        if (
+            ((gameChar_world_x > platforms[i].x_pos) && (gameChar_world_x <= (platforms[i].x_pos+(platforms[i].size * 25)))) //checks if character is between the width of platform
+            && (gameChar_y == (platforms[i].y_pos+1)) // checks player standing on platform
+        )
         {
             return (true);
         }
@@ -592,7 +612,9 @@ function drawBulletEnemies(t_bullet)
     t_bullet.x_pos -= t_bullet.speed; // Decreases x_pos to make Bullet fly across the word.
     
     if (t_bullet.x_pos <= -1300) //Resets Bullet Positioning if has reached the defined boundries.
+    {
         t_bullet.x_pos = 3500;
+    }
     
     
     x = t_bullet.x_pos;
@@ -601,75 +623,83 @@ function drawBulletEnemies(t_bullet)
     push();
     
     if (t_bullet.deadly)
+    {    
         fill(170, 13, 0);
+    }
     else
+    {    
         fill(0); 
+    }
+    
+    
     first_part = {
         x: x,
         y: y,
         width: 25 * size,
         height: 25 * size
-      };
-
+    };
     rect(first_part.x, first_part.y, first_part.width, first_part.height, 360, 0, 0, 360);
 
+    
     fill(10); 
     second_part = {
         x: x + (25 * size),
         y: y + (2.5 * size),
         width: 4 * size,
         height: 20 * size
-      };
-
+    };
     rect(second_part.x, second_part.y, second_part.width, second_part.height);
+    
+    
     fill(0);
     third_part = {
-                    x: (x + (25 * size) + 4 * size),
-                    y: y,
-                    width: 2 * size,
-                    height: 25 * size
-                };
+        x: (x + (25 * size) + 4 * size),
+        y: y,
+        width: 2 * size,
+        height: 25 * size
+    };
     rect(third_part.x, third_part.y, third_part.width, third_part.height);
 
-
+    
+    fill(255);
     eyes_blank = {
         x_pos: x + (8.5 * size),
         y_pos: y + (6.5 * size),
         width: 8 * size,
         height: 9 * size
-      };
-
-      fill(255);
-      arc(eyes_blank.x_pos, eyes_blank.y_pos, eyes_blank.width,
+    };    
+    arc(eyes_blank.x_pos, eyes_blank.y_pos, eyes_blank.width,
         eyes_blank.height, -HALF_PI + QUARTER_PI, PI + -QUARTER_PI, CHORD);
 
-      eyes_pupil = {
+    eyes_pupil = {
         x_pos: x + (8.5 * size),
         y_pos: y + (6.5 * size),
         width: 3 * size,
         height: 4.5 * size
-      };
-
-      
-      fill(0);
-      arc(eyes_pupil.x_pos, eyes_pupil.y_pos, eyes_pupil.width,
+    };
+    
+    //Eyes
+    fill(0);
+    arc(eyes_pupil.x_pos, eyes_pupil.y_pos, eyes_pupil.width,
         eyes_pupil.height, -HALF_PI + QUARTER_PI, PI + -QUARTER_PI, CHORD);
 
-      fill(255, 0, 0);
-      mouth = {
+    
+    //Mouth
+    fill(255, 0, 0);
+    mouth = {
         x_pos: x * 3,
         y_pos: y * 2.6
-      };
+    };
 
-      beginShape();
-      vertex(x + (2.5 * size), y + (20 * size));
-      bezierVertex( x + (10 * size), y + (10 * size),
-                    x + (13 * size), y + (22 * size),
-                    x + (6 * size), y + (23 * size));
-      endShape();
-      pop();
+    beginShape();
+    vertex(x + (2.5 * size), y + (20 * size));
+    bezierVertex( x + (10 * size), y + (10 * size),
+                x + (13 * size), y + (22 * size),
+                x + (6 * size), y + (23 * size));
+    endShape();
+    pop();
 
-    
+    //Sets the center x and y properties of bullet object based on full width and height of shapes
     t_bullet.center_x = x + ( (first_part.width + second_part.width + third_part.width) / 2); 
     t_bullet.center_y = y + ( first_part.height / 2); 
     
@@ -681,11 +711,17 @@ function checkBulletEnemies(t_bullet)
     d = dist(gameChar_world_x, gameChar_y-25, t_bullet.center_x, t_bullet.center_y);
     
     if (t_bullet.size == 1)
+    {    
         proximity = 35;
+    }
     else if (t_bullet.size == 2)
+    {    
         proximity = 55;
+    }
     else if (t_bullet.size == 3)
+    {    
         proximity = 65;
+    }
     
     if (d <= proximity)
     {
@@ -705,11 +741,6 @@ function stopGameMusic()
         gameSounds.died.pause(); 
         gameSounds.game_over.pause();
         gameSounds.jumped.pause(); 
-}
-
-function waitSongFinish(sound)
-{
-
 }
 
 function startGame()
