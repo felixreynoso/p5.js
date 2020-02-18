@@ -14,13 +14,12 @@ var isLeft;
 var isRight;
 var isFalling;
 var isPlummeting;
-//var on_platform; 
 
 var trees_x;
 var clouds;
 var mountains;
 var collectables;
-var canyons;
+var canyons;  
 
 var game_score;
 var flagpole;
@@ -28,18 +27,35 @@ var lives;
 
 var platforms;
 var bullet_enemy;
+var gameSounds;
+let button;
+
+function preload() {
+    soundFormats('mp3'); 
+    gameSounds = { 
+            level: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/level_sound.mp3'),
+            level_complete: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/level_complete_sound.mp3'),
+            bullet_hit: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/bullet_hit_sound.mp3'),
+            collected: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/collected_sound.mp3'),
+            died: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/died_sound.mp3'),
+            game_over: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/game_over_sound.mp3'),
+            jumped: loadSound('https://adventurer2d.s3.ca-central-1.amazonaws.com/assets/sound_files/jumped_sound.mp3')
+        };
+}
+
 
 function setup()
 {
 	createCanvas(1024, 576);
 	floorPos_y = height * 3/4;    
     lives = 3;
-    startGame();
+    startGame(); 
 }
 
 function draw()
 {
 //    console.log(frameRate());
+    console.log(gameChar_world_x);
 	background(100, 155, 255); // fill the sky blue
 
 	noStroke();
@@ -103,19 +119,25 @@ function draw()
     // Game Over Behavior.
     if (lives < 1)
     {
-        fill(0,0,255);
+        fill(255,0,0);
         textSize(18);
         text("Game over. Press space to continue.", width/3, height/2);
         noLoop();
+        stopGameMusic();
+        gameSounds.game_over.play();
     }
     
     // Level Complete Behavior.
     if (flagpole.isReached)
     {
+        if (gameSounds.level.isPlaying())
+            gameSounds.level.pause();
         fill(245, 255, 0);
         textSize(18);
         text("Level complete. Press space to continue.", width/3, height/2);
         noLoop();
+        stopGameMusic();
+        gameSounds.level_complete.play();
     }
     
 	// Logic to make the game character move or the background scroll.
@@ -156,6 +178,7 @@ function draw()
         }
     
         on_platform = false;
+        console.log(on_platform, gameChar_y, platforms[0].y_pos, floorPos_y);
     }
     else
     {
@@ -176,6 +199,12 @@ function draw()
 
 function keyPressed()
 {
+    if (gameSounds.level.isPlaying() == false)
+    {   
+        gameSounds.level.rate(1.25);
+        gameSounds.level.play();
+        
+    }
 	if (keyCode == 37)
         isLeft = true;
     if (keyCode == 39)
@@ -183,9 +212,10 @@ function keyPressed()
     if (((keyCode == 32) && (gameChar_y == floorPos_y)) || //Only allows character to jump if on floor
         ((keyCode == 32) && checkPlatform()))              //Only allows character to jump if on platform
     {
+        gameSounds.jumped.play();
         gameChar_y -= 100;
     }
-    if (keyCode == 32 && lives < 1)
+    if ((keyCode == 32 && lives < 1) || (keyCode == 32 && flagpole.isReached) )
     {
         lives = 3;
         startGame();
@@ -422,6 +452,7 @@ function checkCollectable(t_collectable)
     
     if (collision_radious <= 25)
     {   
+        gameSounds.collected.play();
         t_collectable.isFound = true;
         game_score++;
     }
@@ -430,6 +461,7 @@ function checkCollectable(t_collectable)
 // Function to draw flagpole.
 function renderFlagpole()
 {
+    checkFlagpole();  
     push();
     strokeWeight(5);
     stroke(180);
@@ -437,11 +469,12 @@ function renderFlagpole()
     noStroke();
     fill(250,0, 250);
     if (flagpole.isReached)
+    {    
         rect(flagpole.x_pos,floorPos_y-250, 50, 50);
+    }
     else
     {   
         rect(flagpole.x_pos,floorPos_y-50, 50, 50);
-        checkFlagpole();
     }
     pop();    
 }
@@ -461,9 +494,12 @@ function checkPlayerDie()
 {
     if (gameChar_y > height)
     {
+        stopGameMusic();
+        gameSounds.died.play();
         if (lives > 0)
         {   
             lives--;
+            waitSongFinish(gameSounds.died);
             startGame();
         }
     }    
@@ -501,9 +537,36 @@ function heart(x, y, size)
 // ----------------------------------
 function drawPlatform(t_platform)
 {
+    x = t_platform.x_pos;
+    y = t_platform.y_pos;
+    
     push();
-    fill(0,0,0);
-    rect(t_platform.x_pos, t_platform.y_pos, t_platform.width, 10); 
+    stroke(0);
+    strokeWeight(2);
+    fill(175, 104, 20);
+    
+    for (var i = 0; i < t_platform.size; i++)
+    {
+        rect(x, y, 25, 5);
+        x += 25;
+    }
+    
+    y += 5;
+    x = t_platform.x_pos;
+    
+    for (var i = 0; i <= t_platform.size; i++)
+    {
+        if (i == 0 || i == (t_platform.size))
+        {
+            rect(x, y, 12.5, 5);
+            x += 12.5;
+        }
+        else
+        {
+            rect(x, y, 25, 5);
+            x += 25;
+        }
+    }
     pop();
 }
 
@@ -511,7 +574,7 @@ function checkPlatform()
 {
     for (var i = 0; i < platforms.length; i++)
     {
-        if (((gameChar_world_x > platforms[0].x_pos) && (gameChar_world_x <= (platforms[0].x_pos+platforms[0].width))) && (gameChar_y == (platforms[0].y_pos+1)))
+        if (((gameChar_world_x > platforms[i].x_pos) && (gameChar_world_x <= (platforms[i].x_pos+(platforms[i].size * 25)))) && (gameChar_y == (platforms[i].y_pos+1)))
         {
             return (true);
         }
@@ -522,7 +585,7 @@ function checkPlatform()
 // ----------------------------------
 // Enemies Drawing & Checking Functions
 // ----------------------------------
-
+  
 //Bullet Enemy
 function drawBulletEnemies(t_bullet)
 {
@@ -626,14 +689,31 @@ function checkBulletEnemies(t_bullet)
     
     if (d <= proximity)
     {
-
+        stopGameMusic();
+        gameSounds.bullet_hit.play();
         lives--;
         startGame();
     }
 }
 
-function startGame()
+function stopGameMusic()
 {
+        gameSounds.level.pause();
+        gameSounds.level_complete.pause();
+        gameSounds.bullet_hit.pause(); 
+        gameSounds.collected.pause(); 
+        gameSounds.died.pause(); 
+        gameSounds.game_over.pause();
+        gameSounds.jumped.pause(); 
+}
+
+function waitSongFinish(sound)
+{
+
+}
+
+function startGame()
+{ 
     gameChar_x = width/2;
 	gameChar_y = floorPos_y;
     treePos_y = height/2;
@@ -667,37 +747,43 @@ function startGame()
     mountains = [
         {x_pos: 100, size:1.75 },
         {x_pos: 1000, size: 1.2 },
-        {x_pos: 1900, size:2 }
+        {x_pos: 2300, size:2 }
     ];
     
-    trees_x = [100, 600, 1500, 2000];
+    trees_x = [100, 600, 1500, 2200];
     
     collectables = [
         {x_pos: -400, y_pos: floorPos_y - 5, size: 50, isFound: false},
         {x_pos: -500, y_pos: floorPos_y - 5, size: 60, isFound: false},
         {x_pos: -600, y_pos: floorPos_y - 5, size: 70, isFound: false},
         {x_pos: -700, y_pos: floorPos_y - 5, size: 80, isFound: false},
-        {x_pos: 2700, y_pos: floorPos_y - 75, size: 100, isFound: false}
+        {x_pos: 2700, y_pos: floorPos_y - 75, size: 100, isFound: false},
+        {x_pos: 2840, y_pos: floorPos_y - 230, size: 50, isFound: false}
     ];
 
     canyons = [
-        {x_pos: 740, width: 100},
-        {x_pos: -350, width: 75},
-        {x_pos: 2250, width: 90}
+        {x_pos: -1000, width: 200},
+        {x_pos: -350, width: 120},
+        {x_pos: 740, width: 130},
+        {x_pos: 1650, width: 500}
     ];
     
     game_score = 0;
     
-    flagpole = {isReached: false, x_pos: 2950};
+    flagpole = {isReached: false, x_pos: 3200};
     
     platforms = [
-        {x_pos:500, y_pos: floorPos_y-25, width: 100}
+        {x_pos:500, y_pos: floorPos_y-37 , size: 4},
+        {x_pos:1750, y_pos: floorPos_y-37 , size: 2},
+        {x_pos:1900, y_pos: floorPos_y-37 , size: 3},
+        {x_pos:2700, y_pos: floorPos_y-91 , size: 4},
+        {x_pos:2810, y_pos: floorPos_y-175 , size: 2}
     ];
     
     bullet_enemy = [
-        {x_pos: 2000, y_pos: floorPos_y-20, size: 1, speed: 3, center_x: null, center_y: null},
-        {x_pos: 2500, y_pos: floorPos_y-25, size: 2, speed: 2, center_x: null, center_y: null},
-        {x_pos: 2500, y_pos: floorPos_y-25, size: 3,  speed: 1, center_x: null, center_y: null},
+        {x_pos: 2000, y_pos: floorPos_y-20, size: 1, speed: 3.5, center_x: null, center_y: null},
+        {x_pos: 2500, y_pos: floorPos_y-30, size: 2, speed: 2.5, center_x: null, center_y: null},
+        {x_pos: 2500, y_pos: floorPos_y-30, size: 3,  speed: 1.5, center_x: null, center_y: null},
         {x_pos: 2500, y_pos: floorPos_y-20, size: 1, speed: 7, center_x: null, center_y: null, deadly: true}
     ];
     
