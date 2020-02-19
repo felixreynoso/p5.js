@@ -1,6 +1,6 @@
 /*
 
-The Game Project - Part 7 
+The Game Project - Final Part
 
 */
 
@@ -129,10 +129,6 @@ function draw()
     // Level Complete Behavior.
     if (flagpole.isReached)
     {
-        if (gameSounds.level.isPlaying())
-        {    
-            gameSounds.level.pause();
-        }
         fill(245, 255, 0);
         textSize(18);
         text("Level complete. Press space to continue.", width/3, height/2);
@@ -220,7 +216,7 @@ function keyPressed()
         gameSounds.jumped.play();
         gameChar_y -= 100;
     }
-    if ((keyCode == 32 && lives < 1) || (keyCode == 32 && flagpole.isReached) )
+    if ((keyCode == 32 && lives < 1) || (keyCode == 32 && flagpole.isReached))
     {
         lives = 3;
         startGame();
